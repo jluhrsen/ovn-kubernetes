@@ -526,6 +526,12 @@ jobs:
         name: kind-logs-${{ env.JOB_NAME }}-${{ github.run_id }}
         path: /tmp/kind/logs
 
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-artifacts
+        path: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
+
   e2e-dual-conversion:
     name: e2e-dual-conversion
     if: github.event_name != 'schedule'
