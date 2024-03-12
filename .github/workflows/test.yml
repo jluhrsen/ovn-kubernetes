@@ -510,12 +510,15 @@ jobs:
         name: test-results-${{ env.JOB_NAME }}-${{ github.run_id }}
         path: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
 
-    - name: Push result to Testspace server
+    - name: Setup Testspace
       uses: testspace-com/setup-testspace@v1
       with:
         domain: ${{ github.repository_owner }}
+
+    - name: Push result to Testspace server
       run: |
           testspace /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/test-results-${{ env.JOB_NAME }}-${{ github.run_id }}.xml coverage.xml
+      if: always()
 
   e2e-dual-conversion:
     name: e2e-dual-conversion
