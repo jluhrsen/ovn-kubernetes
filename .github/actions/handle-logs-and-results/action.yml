@@ -1,0 +1,50 @@
+# utility file to collect common actions as composable actions to deduplicate the same work in different workflows
+
+name: 'Setup, Push to Testspace, and Handle KIND Logs'
+description: 'Setup Testspace, push results, export and upload KIND cluster logs'
+inputs:
+  domain:
+    description: 'Testspace domain'
+    required: true
+  results_path:
+    description: 'Path to test results'
+    required: true
+  kind_cluster_name:
+    description: 'Name of the KIND cluster'
+    required: true
+  job_name:
+    description: 'Name of the job, used for naming artifacts'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Export kind logs
+      run: |
+        mkdir -p /tmp/kind/logs
+        kind export logs --name ${{ inputs.kind_cluster_name }} --loglevel=debug /tmp/kind/logs
+      shell: bash
+      if: always()
+
+    - name: Upload kind logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: kind-logs-${{ inputs.job_name }}-${{ github.run_id }}
+        path: /tmp/kind/logs
+      if: always()
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ inputs.job_name }}-${{ github.run_id }}
+        path: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
+
+    - name: Setup Testspace
+      uses: testspace-com/setup-testspace@v1
+      with:
+        domain: ${{ inputs.domain }}
+
+    - name: Push result to Testspace server
+      run: testspace ${{ inputs.results_path }}
+      shell: bash
+      if: always()
