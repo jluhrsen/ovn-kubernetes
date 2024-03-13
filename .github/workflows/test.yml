@@ -505,7 +505,7 @@ jobs:
         path: /tmp/kind/logs
 
     - name: Upload test results
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ env.JOB_NAME }}-${{ github.run_id }}
         path: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
@@ -517,7 +517,7 @@ jobs:
 
     - name: Push result to Testspace server
       run: |
-          testspace /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/test-results-${{ env.JOB_NAME }}-${{ github.run_id }}.xml coverage.xml
+          testspace /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
       if: always()
 
   e2e-dual-conversion:
