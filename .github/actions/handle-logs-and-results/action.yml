@@ -45,6 +45,6 @@ runs:
         domain: ${{ inputs.domain }}
 
     - name: Push result to Testspace server
-      run: testspace ${{ inputs.results_path }}
+      run: testspace "${{ inputs.results_path }}/"*.xml
       shell: bash
       if: always()
