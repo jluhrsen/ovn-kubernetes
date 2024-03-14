@@ -373,7 +373,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - id: set-matrix
         run: |
           MATRIX_JSON=$(cat .github/workflows/e2e-matrix.json | jq '[.[] | select(has("_comment") | not)]' -c)
