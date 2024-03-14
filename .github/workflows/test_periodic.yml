@@ -77,7 +77,7 @@ jobs:
          # Not currently supported but needs to be.
          # See e2e in test.yml
          - {"ipfamily": "dualstack", "target": "control-plane"}
-    needs: [build, k8s]
+    needs: [build]
     env:
       JOB_NAME: "${{ matrix.target }}-${{ matrix.ha }}-${{ matrix.ipfamily }}"
       OVN_HA: "${{ matrix.ha == 'HA' }}"
