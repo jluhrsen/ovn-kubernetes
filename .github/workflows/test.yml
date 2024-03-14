@@ -377,7 +377,7 @@ jobs:
       - id: set-matrix
         run: |
           MATRIX_JSON=$(cat .github/workflows/e2e-matrix.json | jq '[.[] | select(has("_comment") | not)]' -c)
-          echo "::set-output name=matrix::$MATRIX_JSON"
+          echo "name=matrix::$MATRIX_JSON"
 
   e2e:
     name: e2e
