@@ -433,6 +433,9 @@ jobs:
         cache-dependency-path: "**/*.sum"
       id: go
 
+    - name: Install go-junit-report
+      run: go install github.com/jstemmer/go-junit-report@latest
+
     - name: Set up environment
       run: |
         export GOPATH=$(go env GOPATH)
