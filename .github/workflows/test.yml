@@ -391,6 +391,7 @@ jobs:
     needs: [ build-pr, matrix ]
     env:
       JOB_NAME: "${{ matrix.target }}-${{ matrix.ha }}-${{ matrix.gateway-mode }}-${{ matrix.ipfamily }}-${{ matrix.disable-snat-multiple-gws }}-${{ matrix.second-bridge }}"
+      GITHUB_RUN_ID: "${{ github.run_id }}"
       OVN_HYBRID_OVERLAY_ENABLE: "${{ matrix.target == 'control-plane' }}"
       OVN_MULTICAST_ENABLE:  "${{ matrix.target == 'control-plane' }}"
       OVN_EMPTY_LB_EVENTS: "${{ matrix.target == 'control-plane' }}"
@@ -513,6 +514,7 @@ jobs:
     needs: [ build-pr ]
     env:
       JOB_NAME: "DualStack-conversion-shared-${{ matrix.ha }}-${{ matrix.interconnect }}"
+      GITHUB_RUN_ID: "${{ github.run_id }}"
       OVN_HA: "${{ matrix.ha == 'HA' }}"
       KIND_IPV4_SUPPORT: "true"
       KIND_IPV6_SUPPORT: "false"
@@ -533,6 +535,9 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
         cache-dependency-path: "**/*.sum"
       id: go
+
+    - name: Install go-junit-report
+      run: go install github.com/jstemmer/go-junit-report@latest
 
     - name: Set up environment
       run: |
