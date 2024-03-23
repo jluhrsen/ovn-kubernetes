@@ -382,7 +382,6 @@ jobs:
 
   e2e:
     name: e2e
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     # 30 mins for kind, 180 mins for control-plane tests, 10 minutes for all other steps
     timeout-minutes: 220
