@@ -199,5 +199,5 @@ go test -test.timeout 180m -v . \
         ${NUM_NODES:+"--num-nodes=${NUM_NODES}"} \
         ${E2E_REPORT_DIR:+"--report-dir=${E2E_REPORT_DIR}"} \
         ${E2E_REPORT_PREFIX:+"--report-prefix=${E2E_REPORT_PREFIX}"} \
-        2>&1 | go-junit-report | tee $(E2E_REPORT_DIR)/junit-conformance-${JOB_NAME}-${{ github.run_id }}.xml
+        2>&1 | go-junit-report | tee $(E2E_REPORT_DIR)/junit-conformance-${JOB_NAME}-${GITHUB_RUN_ID}.xml
 popd
