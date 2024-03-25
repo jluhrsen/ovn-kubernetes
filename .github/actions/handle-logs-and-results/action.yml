@@ -46,8 +46,12 @@ runs:
     - name: Post Process JUnit Files
       shell: bash
       run: |
+        set -x
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
         xmlstarlet ed --inplace -d "//testcase[@status='skipped']" /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
         for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
+            cat "$file"
             testcase_names=$(xmlstarlet sel -t -m "//testcase[not(@status='skipped')]" -v "@name" -n "$file")
     
             count_before_suite=0
@@ -61,11 +65,12 @@ runs:
                 fi
             done <<< "$testcase_names"
             
-            if [[ count_before_suite -eq 1 ]] && [[ count_after_suite -eq 1 ]]; then
+            if [[ $count_before_suite -eq 1 ]] && [[ $count_after_suite -eq 1 ]]; then
                 echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
                 mv "$file" "${file%.xml}.all_skipped"
             fi
         done
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
 
 #    - name: Setup Testspace
 #      uses: testspace-com/setup-testspace@v1
