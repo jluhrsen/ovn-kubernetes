@@ -372,6 +372,7 @@ jobs:
     runs-on: ubuntu-latest
     # 30 mins for kind, 180 mins for control-plane tests, 10 minutes for all other steps
     timeout-minutes: 220
+    needs: [ build-pr ]
     strategy:
       fail-fast: false
       matrix:
@@ -413,7 +414,6 @@ jobs:
           - {"target": "kv-live-migration", "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-disabled", "num-workers": "3"}
           - {"target": "kv-live-migration", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "dualstack", "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "num-workers": "3"}
           - {"target": "control-plane", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4", "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "forwarding": "disable-forwarding"}
-        needs: [ build-pr ]
     env:
       JOB_NAME: "${{ matrix.target }}-${{ matrix.ha }}-${{ matrix.gateway-mode }}-${{ matrix.ipfamily }}-${{ matrix.disable-snat-multiple-gws }}-${{ matrix.second-bridge }}"
       GITHUB_RUN_ID: "${{ github.run_id }}"
