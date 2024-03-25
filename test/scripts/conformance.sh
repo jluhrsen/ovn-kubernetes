@@ -13,5 +13,5 @@ export KUBE_CONTAINER_RUNTIME_NAME=containerd
 
 pushd conformance
 go mod download
-go test -timeout=0 -v -kubeconfig ${KUBECONFIG} 2>&1 | go-junit-report | tee $(E2E_REPORT_DIR)/junit-conformance-${JOB_NAME}-${GITHUB_RUN_ID}.xml
+go test -timeout=0 -v -kubeconfig ${KUBECONFIG} 2>&1 | go-junit-report | tee ${E2E_REPORT_DIR}/junit-conformance-${JOB_NAME}-${GITHUB_RUN_ID}.xml
 popd
