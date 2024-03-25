@@ -39,10 +39,39 @@ runs:
         name: test-results-${{ inputs.job_name }}-${{ github.run_id }}
         path: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
 
+    - name: Install XMLStarlet
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y xmlstarlet
+
+    - name: Post Process JUnit Files
+      shell: bash
+      run: |
+        xmlstarlet ed --inplace -d "//testcase[@status='skipped']" /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
+        for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
+            testcase_names=$(xmlstarlet sel -t -m "//testcase[not(@status='skipped')]" -v "@name" -n "$file")
+    
+            count_before_suite=0
+            count_after_suite=0
+            
+            while IFS= read -r line; do
+                if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
+                    ((count_before_suite++))
+                elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
+                    ((count_after_suite++))
+                fi
+            done <<< "$testcase_names"
+            
+            if [[ count_before_suite -eq 1 ]] && [[ count_after_suite -eq 1 ]]; then
+                echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
+                mv "$file" "${file%.xml}.all_skipped"
+            fi
+        done
+
 #    - name: Setup Testspace
 #      uses: testspace-com/setup-testspace@v1
 #      with:
 #        domain: ${{ inputs.domain }}
+#      if: always()
 
 #    - name: Push result to Testspace server
 #      run: testspace "${{ inputs.results_path }}/"*.xml
