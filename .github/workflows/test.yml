@@ -196,10 +196,10 @@ jobs:
                 echo "looking at this line ${line}"
                 if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
                     echo "count_before_suite before increment: $count_before_suite"
-                    ((count_before_suite++))
+                    count_before_suite=$((count_before_suite + 1))
                     echo "count_before_suite after increment: $count_before_suite"
                 elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
-                    ((count_after_suite++))
+                    count_after_suite=$((count_after_suite + 1))
                 fi
             done <<< "$testcase_names"
         
