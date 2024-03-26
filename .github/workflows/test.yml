@@ -149,6 +149,9 @@ jobs:
     name: Build-PR
     runs-on: ubuntu-latest
     steps:
+    - name: Install XMLStarlet
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y xmlstarlet
     - name: Post Process JUnit Files
       shell: bash
       run: |
