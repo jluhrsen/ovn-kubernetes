@@ -69,13 +69,13 @@ runs:
         done
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
 
-#    - name: Setup Testspace
-#      uses: testspace-com/setup-testspace@v1
-#      with:
-#        domain: ${{ inputs.domain }}
-#      if: always()
+    - name: Setup Testspace
+      uses: testspace-com/setup-testspace@v1
+      with:
+        domain: ${{ inputs.domain }}
+      if: always()
 
-#    - name: Push result to Testspace server
-#      run: testspace "${{ inputs.results_path }}/"*.xml
-#      shell: bash
-#      if: always()
+    - name: Push result to Testspace server
+      run: testspace "${{ inputs.results_path }}/"*.xml
+      shell: bash
+      if: always()
