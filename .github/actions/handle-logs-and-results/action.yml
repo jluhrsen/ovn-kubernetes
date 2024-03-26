@@ -58,17 +58,22 @@ runs:
             count_after_suite=0
             
             while IFS= read -r line; do
+                echo "looking at this line ${line}"
                 if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
+                    echo "count_before_suite before increment: $count_before_suite"
                     ((count_before_suite++))
+                    echo "count_before_suite after increment: $count_before_suite"
                 elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
                     ((count_after_suite++))
                 fi
             done <<< "$testcase_names"
             
+            echo "now we are checking count_before_suite and count_after_suite values: $count_before_suite $count_after_suite"
             if [[ $count_before_suite -eq 1 ]] && [[ $count_after_suite -eq 1 ]]; then
                 echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
                 mv "$file" "${file%.xml}.all_skipped"
             fi
+            echo "just looking if we got here"
         done
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
 
