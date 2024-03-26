@@ -149,39 +149,39 @@ jobs:
     name: Build-PR
     runs-on: ubuntu-latest
     steps:
-      - name: Post Process JUnit Files
-        shell: bash
-        run: |
-          set -x
-          ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
-          xmlstarlet ed --inplace -d "//testcase[@status='skipped']" /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
-          ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
-          for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
-              cat "$file"
-              testcase_names=$(xmlstarlet sel -t -m "//testcase[not(@status='skipped')]" -v "@name" -n "$file")
-          
-              count_before_suite=0
-              count_after_suite=0
-          
-              while IFS= read -r line; do
-                  echo "looking at this line ${line}"
-                  if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
-                      echo "count_before_suite before increment: $count_before_suite"
-                      ((count_before_suite++))
-                      echo "count_before_suite after increment: $count_before_suite"
-                  elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
-                      ((count_after_suite++))
-                  fi
-              done <<< "$testcase_names"
-          
-              echo "now we are checking count_before_suite and count_after_suite values: $count_before_suite $count_after_suite"
-              if [[ $count_before_suite -eq 1 ]] && [[ $count_after_suite -eq 1 ]]; then
-                  echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
-                  mv "$file" "${file%.xml}.all_skipped"
-              fi
-              echo "just looking if we got here"
-          done
-          ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
+    - name: Post Process JUnit Files
+      shell: bash
+      run: |
+        set -x
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
+        xmlstarlet ed --inplace -d "//testcase[@status='skipped']" /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
+        for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
+            cat "$file"
+            testcase_names=$(xmlstarlet sel -t -m "//testcase[not(@status='skipped')]" -v "@name" -n "$file")
+        
+            count_before_suite=0
+            count_after_suite=0
+        
+            while IFS= read -r line; do
+                echo "looking at this line ${line}"
+                if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
+                    echo "count_before_suite before increment: $count_before_suite"
+                    ((count_before_suite++))
+                    echo "count_before_suite after increment: $count_before_suite"
+                elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
+                    ((count_after_suite++))
+                fi
+            done <<< "$testcase_names"
+        
+            echo "now we are checking count_before_suite and count_after_suite values: $count_before_suite $count_after_suite"
+            if [[ $count_before_suite -eq 1 ]] && [[ $count_after_suite -eq 1 ]]; then
+                echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
+                mv "$file" "${file%.xml}.all_skipped"
+            fi
+            echo "just looking if we got here"
+        done
+        ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
     # Create a cache for the build PR image
     - name: Restore PR image cache
       id: image_cache_pr
