@@ -187,6 +187,7 @@ FOCUS=$(echo ${@:1} | sed 's/ /\\s/g')
 pushd e2e
 
 go mod download
+mkdir -p ${E2E_REPORT_DIR}
 go test -test.timeout 180m -v . \
         -ginkgo.v \
         -ginkgo.focus ${FOCUS:-.} \

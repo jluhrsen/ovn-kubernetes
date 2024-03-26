@@ -523,6 +523,7 @@ jobs:
         results_path: ${TEST_RESULTS_PATH}
         kind_cluster_name: ${KIND_CLUSTER_NAME}
         job_name: ${{ env.JOB_NAME }}
+      if: always()
 
   e2e-dual-conversion:
     name: e2e-dual-conversion
