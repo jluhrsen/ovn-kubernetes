@@ -435,6 +435,13 @@ jobs:
       KIND_NUM_WORKER: "${{ matrix.num-workers }}"
       KIND_NUM_NODES_PER_ZONE: "${{ matrix.num-nodes-per-zone }}"
       OVN_DISABLE_FORWARDING: "${{ matrix.forwarding == 'disable-forwarding' }}"
+      MATRIX_TARGET: ${{ matrix.target }}
+      MATRIX_HA: ${{ matrix.ha }}
+      MATRIX_GATEWAY_MODE: ${{ matrix.gateway-mode }}
+      MATRIX_IPFAMILY: ${{ matrix.ipfamily }}
+      MATRIX_DISABLE_SNAT_MULTIPLE_GWS: ${{ matrix.disable-snat-multiple-gws }}
+      MATRIX_SECOND_BRIDGE: ${{ matrix.second-bridge }}
+      MATRIX_IC: ${{ matrix.ic }}
     steps:
 
     - name: Free up disk space
