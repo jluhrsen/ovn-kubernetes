@@ -96,5 +96,4 @@ func TestE2E(t *testing.T) {
 	gomega.RegisterFailHandler(framework.Fail)
 	defaultReporterConfigType := config.DeprecatedGinkgoConfigType{}
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, fmt.Sprintf("E2e Suite %v%02d", framework.TestContext.ReportPrefix, defaultReporterConfigType.ParallelNode), r)
-
 }
