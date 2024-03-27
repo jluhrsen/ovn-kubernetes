@@ -188,6 +188,7 @@ pushd e2e
 
 go mod download
 mkdir -p ${E2E_REPORT_DIR}
+set -x
 go test -test.timeout 180m -v . \
         -ginkgo.v \
         -ginkgo.focus ${FOCUS:-.} \
