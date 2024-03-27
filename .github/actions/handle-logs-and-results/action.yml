@@ -47,40 +47,34 @@ runs:
       shell: bash
       run: |
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
-        
-        current_suite_name=$(xmlstarlet sel -t -m "//testsuite" -v "@name" -n "$file")
-        conformance=""
-        if [[ "$current_suite_name" == *"conformance"* ]]; then
-            conformance="-conformance"
-        fi
-        descriptive_suitename="${MATRIX_TARGET}-${MATRIX_HA}-${MATRIX_GATEWAY_MODE}-${MATRIX_IPFAMILY}-${MATRIX_DISABLE_SNAT_MULTIPLE_GWS}-${MATRIX_SECOND_BRIDGE}-${MATRIX_IC}${conformance}"
-        
-        xmlstarlet ed --inplace -u "//testsuite/@name" -v "descriptive_suitename" "$file"
-        xmlstarlet ed --inplace -d "//testcase[@status='skipped']" /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
+           
+        # remove framwork test cases
+        xmlstarlet ed --inplace \
+            -d "//testcase[@name='[SynchronizedBeforeSuite]' or @name='[SynchronizedAfterSuite]' or @name='[ReportBeforeSuite]' or @name='[ReportAfterSuite]' or @status='skipped']" \
+            /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
         
         for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
+        
+            # make sure junit suite name reflects the test matrix
+            current_suite_name=$(xmlstarlet sel -t -m "//testsuite" -v "@name" -n "$file")
+            conformance=""
+            if [[ "$current_suite_name" == *"conformance"* ]]; then
+                conformance="-conformance"
+            fi
+            descriptive_suitename="${MATRIX_TARGET}-${MATRIX_HA}-${MATRIX_GATEWAY_MODE}-${MATRIX_IPFAMILY}-${MATRIX_DISABLE_SNAT_MULTIPLE_GWS}-${MATRIX_SECOND_BRIDGE}-${MATRIX_IC}${conformance}"
+            xmlstarlet ed --inplace -u "//testsuite/@name" -v "descriptive_suitename" "$file"
+        
+            # summary junit files are useless to report to testspace
             if grep -q '<testsuite tests="1" failures="0"' "$file" && grep -q '<testcase classname="e2e" name="TestE2E"' "$file"; then
                 echo "Detected summary report file. Renaming to prevent upload to Testspace."
                 mv "$file" "${file%.xml}.summary"
                 continue
             fi
         
-            testcase_names=$(xmlstarlet sel -t -m "//testcase[not(@status='skipped')]" -v "@name" -n "$file")
-    
-            count_before_suite=0
-            count_after_suite=0
-            
-            while IFS= read -r line; do
-                if [[ "$line" == "[ReportBeforeSuite]"* ]]; then
-                    count_before_suite=$((count_before_suite + 1))
-                elif [[ "$line" == "[ReportAfterSuite]"* ]]; then
-                    count_after_suite=$((count_after_suite + 1))
-                fi
-            done <<< "$testcase_names"
-            
-            if [[ $count_before_suite -eq 1 ]] && [[ $count_after_suite -eq 1 ]]; then
-                echo "Only [ReportBeforeSuite] and [ReportAfterSuite] test cases are present. Removing .xml extension to prevent it being uploaded to Testspace."
-                mv "$file" "${file%.xml}.all_skipped"
+            testcase_count=$(xmlstarlet sel -t -v "count(//testcase)" "$file")
+            if [ "testcase_count" -eq 0 ]; then
+                echo "No test cases left after framework cases. Renaming file to indicate it should not be uploaded."
+                mv "$file" "${file%.xml}.no_tests_left"
             fi
         done
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
