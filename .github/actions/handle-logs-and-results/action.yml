@@ -46,8 +46,10 @@ runs:
     - name: Post Process JUnit Files
       shell: bash
       run: |
+        set -x
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
-           
+        cat /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
+        
         # remove framwork test cases
         xmlstarlet ed --inplace \
             -d "//testcase[@name='[SynchronizedBeforeSuite]' or @name='[SynchronizedAfterSuite]' or @name='[ReportBeforeSuite]' or @name='[ReportAfterSuite]' or @status='skipped']" \
@@ -72,12 +74,13 @@ runs:
             fi
         
             testcase_count=$(xmlstarlet sel -t -v "count(//testcase)" "$file")
-            if [ "testcase_count" -eq 0 ]; then
+            if [[ $testcase_count -eq 0 ]]; then
                 echo "No test cases left after framework cases. Renaming file to indicate it should not be uploaded."
                 mv "$file" "${file%.xml}.no_tests_left"
             fi
         done
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
+        cat /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
 
     - name: Setup Testspace
       uses: testspace-com/setup-testspace@v1
