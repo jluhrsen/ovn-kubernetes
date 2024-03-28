@@ -56,7 +56,7 @@ runs:
             descriptive_suitename="${MATRIX_TARGET}-${MATRIX_HA}-${MATRIX_GATEWAY_MODE}-${MATRIX_IPFAMILY}-${MATRIX_DISABLE_SNAT_MULTIPLE_GWS}-${MATRIX_SECOND_BRIDGE}-${MATRIX_IC}${conformance}"
             xmlstarlet ed --inplace -u "//testsuite/@name" -v "$descriptive_suitename" "$file"
             # testspace seems to organize by classname and not name
-            xmlstarlet ed --inplace -u "//testsuite/@classname" -v "$descriptive_suitename" "$file"
+            xmlstarlet ed --inplace -u "//testcase/@classname" -v "$descriptive_suitename" "$file"
         
             # summary junit files are useless to report to testspace
             if grep -q '<testsuite tests="1" failures="0"' "$file" && grep -q '<testcase classname="e2e" name="TestE2E"' "$file"; then
