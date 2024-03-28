@@ -48,13 +48,16 @@ runs:
       run: |
         set -x
         ls -altr /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/
-        cat /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
         
-        # remove framwork test cases
-        xmlstarlet ed --inplace \
-            -d "//testcase[@name='[SynchronizedBeforeSuite]' or @name='[SynchronizedAfterSuite]' or @name='[ReportBeforeSuite]' or @name='[ReportAfterSuite]' or @status='skipped']" \
+        # remove framework or skipped test cases
+        xmlstarlet ed --inplace                                         \
+            -d "//testcase[contains(@name, '[SynchronizedBeforeSuite]') \
+                or contains(@name, '[SynchronizedAfterSuite]')          \
+                or contains(@name, '[ReportBeforeSuite]')               \
+                or contains(@name, '[ReportAfterSuite]')                \
+                or @status='skipped']"                                  \
             /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml
-        
+
         for file in /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/*.xml; do
         
             # make sure junit suite name reflects the test matrix
@@ -64,7 +67,7 @@ runs:
                 conformance="-conformance"
             fi
             descriptive_suitename="${MATRIX_TARGET}-${MATRIX_HA}-${MATRIX_GATEWAY_MODE}-${MATRIX_IPFAMILY}-${MATRIX_DISABLE_SNAT_MULTIPLE_GWS}-${MATRIX_SECOND_BRIDGE}-${MATRIX_IC}${conformance}"
-            xmlstarlet ed --inplace -u "//testsuite/@name" -v "descriptive_suitename" "$file"
+            xmlstarlet ed --inplace -u "//testsuite/@name" -v "$descriptive_suitename" "$file"
         
             # summary junit files are useless to report to testspace
             if grep -q '<testsuite tests="1" failures="0"' "$file" && grep -q '<testcase classname="e2e" name="TestE2E"' "$file"; then

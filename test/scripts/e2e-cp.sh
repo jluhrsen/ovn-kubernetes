@@ -188,7 +188,31 @@ pushd e2e
 
 go mod download
 mkdir -p ${E2E_REPORT_DIR}
-set -x
+go test -test.timeout 180m -v . \
+        -ginkgo.dryRun \
+        -ginkgo.v \
+        -ginkgo.focus ${FOCUS:-.} \
+        -ginkgo.timeout 3h \
+        -ginkgo.flake-attempts ${FLAKE_ATTEMPTS:-2} \
+        -ginkgo.skip="${SKIPPED_TESTS}" \
+        -provider skeleton \
+        -kubeconfig ${KUBECONFIG} \
+        ${NUM_NODES:+"--num-nodes=${NUM_NODES}"} \
+        ${E2E_REPORT_DIR:+"--report-dir=${E2E_REPORT_DIR}"} \
+        ${E2E_REPORT_PREFIX:+"--report-prefix=${E2E_REPORT_PREFIX}"}
+
+go test -test.timeout 180m -v . \
+        -ginkgo.v \
+        -ginkgo.focus ${FOCUS:-.} \
+        -ginkgo.timeout 3h \
+        -ginkgo.flake-attempts ${FLAKE_ATTEMPTS:-2} \
+        -ginkgo.skip="${SKIPPED_TESTS}" \
+        -provider skeleton \
+        -kubeconfig ${KUBECONFIG} \
+        ${NUM_NODES:+"--num-nodes=${NUM_NODES}"} \
+        ${E2E_REPORT_DIR:+"--report-dir=${E2E_REPORT_DIR}"} \
+        ${E2E_REPORT_PREFIX:+"--report-prefix=${E2E_REPORT_PREFIX}"}
+
 go test -test.timeout 180m -v . \
         -ginkgo.v \
         -ginkgo.focus ${FOCUS:-.} \
