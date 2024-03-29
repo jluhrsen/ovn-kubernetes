@@ -6,6 +6,7 @@ on:
     branches: [ master ]
   schedule:
     - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
