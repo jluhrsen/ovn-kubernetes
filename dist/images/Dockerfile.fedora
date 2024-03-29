@@ -9,8 +9,6 @@
 # are built locally and included in the image (instead of the rpm)
 #
 
-# NO-OP
-
 FROM fedora:39
 
 USER root
