@@ -30,7 +30,7 @@ env:
   CI_IMAGE_MASTER_TAR: image-master.tar
   CI_IMAGE_PR_TAR: image-pr.tar
   CI_DIST_IMAGES_OUTPUT: dist/images/_output/
-
+  TEST_RESULTS_PATH: /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts
 
 jobs:
   # separate job for parallelism
@@ -248,7 +248,6 @@ jobs:
 
   ovn-upgrade-e2e:
     name: Upgrade OVN from Master to PR branch based image
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     needs:
@@ -435,6 +434,13 @@ jobs:
       KIND_NUM_WORKER: "${{ matrix.num-workers }}"
       KIND_NUM_NODES_PER_ZONE: "${{ matrix.num-nodes-per-zone }}"
       OVN_DISABLE_FORWARDING: "${{ matrix.forwarding == 'disable-forwarding' }}"
+      MATRIX_TARGET: ${{ matrix.target }}
+      MATRIX_HA: ${{ matrix.ha }}
+      MATRIX_GATEWAY_MODE: ${{ matrix.gateway-mode }}
+      MATRIX_IPFAMILY: ${{ matrix.ipfamily }}
+      MATRIX_DISABLE_SNAT_MULTIPLE_GWS: ${{ matrix.disable-snat-multiple-gws }}
+      MATRIX_SECOND_BRIDGE: ${{ matrix.second-bridge }}
+      MATRIX_IC: ${{ matrix.ic }}
     steps:
 
     - name: Free up disk space
@@ -457,6 +463,9 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
         cache-dependency-path: "**/*.sum"
       id: go
+
+    - name: Install go-junit-report
+      run: go install github.com/jstemmer/go-junit-report@latest
 
     - name: Set up environment
       run: |
@@ -513,22 +522,17 @@ jobs:
           fi
         fi
 
-    - name: Export kind logs
-      if: always()
-      run: |
-        mkdir -p /tmp/kind/logs
-        kind export logs --name ${KIND_CLUSTER_NAME} --loglevel=debug /tmp/kind/logs
-
-    - name: Upload kind logs
-      if: always()
-      uses: actions/upload-artifact@v4
+    - name: Setup Testspace; Upload test results and Push to Testspace; Export/Upload KIND logs
+      uses: ./.github/actions/handle-logs-and-results
       with:
-        name: kind-logs-${{ env.JOB_NAME }}-${{ github.run_id }}
-        path: /tmp/kind/logs
+        domain: ${{ github.repository_owner }}
+        results_path: ${TEST_RESULTS_PATH}
+        kind_cluster_name: ${KIND_CLUSTER_NAME}
+        job_name: ${{ env.JOB_NAME }}
+
 
   e2e-dual-conversion:
     name: e2e-dual-conversion
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -561,6 +565,9 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
         cache-dependency-path: "**/*.sum"
       id: go
+
+    - name: Install go-junit-report
+      run: go install github.com/jstemmer/go-junit-report@latest
 
     - name: Set up environment
       run: |
@@ -600,18 +607,13 @@ jobs:
       run: |
         make -C test control-plane WHAT="DualStack"
 
-    - name: Export kind logs
-      if: always()
-      run: |
-        mkdir -p /tmp/kind/logs
-        kind export logs --name ${KIND_CLUSTER_NAME} --loglevel=debug /tmp/kind/logs
-
-    - name: Upload kind logs
-      if: always()
-      uses: actions/upload-artifact@v4
+    - name: Setup Testspace; Upload test results and Push to Testspace; Export/Upload KIND logs
+      uses: ./.github/actions/handle-logs-and-results
       with:
-        name: kind-logs-${{ env.JOB_NAME }}-${{ github.run_id }}
-        path: /tmp/kind/logs
+        domain: ${{ github.repository_owner }}
+        results_path: ${TEST_RESULTS_PATH}
+        kind_cluster_name: ${KIND_CLUSTER_NAME}
+        job_name: ${{ env.JOB_NAME }}
 
     - name: Export ovn dbs
       if: ${{ failure() }}
