@@ -15,22 +15,21 @@ inputs:
   job_name:
     description: 'Name of the job, used for naming artifacts'
     required: true
+  upload_to_testspace:
+    description: 'If set to true, post process junit xml files and upload to testspace'
+    required: false
+    default: false
 
 runs:
   using: "composite"
   steps:
-    - name: Export kind logs
-      run: |
-        mkdir -p /tmp/kind/logs
-        kind export logs --name ${{ inputs.kind_cluster_name }} --loglevel=debug /tmp/kind/logs
-      shell: bash
-      if: always()
-
     - name: Install XMLStarlet
+      if: ${{ always() && inputs.upload_to_testspace == 'true' }}
       shell: bash
       run: sudo apt-get update && sudo apt-get install -y xmlstarlet
 
     - name: Post Process JUnit Files
+      if: ${{ always() && inputs.upload_to_testspace == 'true' }}
       shell: bash
       run: |
         set -x
@@ -75,13 +74,20 @@ runs:
         find /home/runner/work/ovn-kubernetes/ovn-kubernetes/test/_artifacts/ -type f -exec cat {} +
 
     - name: Setup Testspace
+      if: ${{ always() && inputs.upload_to_testspace == 'true' }}
       uses: testspace-com/setup-testspace@v1
       with:
         domain: ${{ inputs.domain }}
-      if: always()
 
     - name: Push result to Testspace server
+      if: ${{ always() && inputs.upload_to_testspace == 'true' }}
       run: testspace "${{ inputs.results_path }}/"*.xml
+      shell: bash
+
+    - name: Export kind logs
+      run: |
+        mkdir -p /tmp/kind/logs
+        kind export logs --name ${{ inputs.kind_cluster_name }} --loglevel=debug /tmp/kind/logs
       shell: bash
       if: always()
 
