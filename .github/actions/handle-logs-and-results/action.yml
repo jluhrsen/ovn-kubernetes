@@ -80,14 +80,7 @@ runs:
     - name: Setup Testspace
       uses: testspace-com/setup-testspace@v1
       with:
-        domain: ovn-kubernetes
-      if: always()
-
-    - name: Configure Testspace Project and Space
-      run: |
-        testspace config url "ovn-kubernetes.testspace.com/ovn-org:ovn-kubernetes"
-        testspace config space master
-      shell: bash
+        domain: jluhrsen
       if: always()
 
     - name: Push result to Testspace server
