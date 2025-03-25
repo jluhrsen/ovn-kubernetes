@@ -1,0 +1,14 @@
+name: Env Check
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  check-env:
+    runs-on: self-hosted
+    steps:
+      - name: Kernel & OS Info
+        run: |
+          uname -a
+          cat /etc/os-release
