@@ -16,8 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: 1.22.0
-  K8S_VERSION: v1.31.0
+  K8S_VERSION: v1.32.3
   KIND_CLUSTER_NAME: ovn
   KIND_INSTALL_INGRESS: true
   KIND_ALLOW_SYSTEM_WRITES: true
@@ -47,14 +46,18 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Verify
       uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.59.1
+        version: v1.60.3
         working-directory: go-controller
         args: --modules-download-mode=vendor --timeout=15m0s --verbose
 
@@ -104,8 +107,12 @@ jobs:
       if: steps.is_master_image_build_needed.outputs.MASTER_IMAGE_RESTORED != 'true' && success()
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Build - from master branch
@@ -184,8 +191,12 @@ jobs:
       if: steps.is_pr_image_build_needed.outputs.PR_IMAGE_RESTORED != 'true' && success()
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Install VRF kernel module
@@ -258,18 +269,17 @@ jobs:
       continue-on-error: true
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GO111MODULE: off
       run: |
         set -x
-        go get github.com/mattn/goveralls
-        go get github.com/modocache/gover
+        go install github.com/mattn/goveralls@latest
+        go install github.com/modocache/gover@latest
         PATH=$PATH:$(go env GOPATH)/bin
 
-        mkdir -p $(go env GOPATH)/src/github.com/ovn-kubernetes
-        ln -sf $(pwd) $(go env GOPATH)/src/github.com/ovn-kubernetes/ovn-kubernetes
+        mkdir -p $(go env GOPATH)/src/github.com/ovn-org
+        ln -sf $(pwd) $(go env GOPATH)/src/github.com/ovn-org/ovn-kubernetes
 
         gover
-        goveralls -coverprofile=gover.coverprofile -service=github
+        GO111MODULE=off goveralls -coverprofile=gover.coverprofile -service=github
 
     - name: Cache PR image
       if: steps.is_pr_image_build_needed.outputs.PR_IMAGE_RESTORED != 'true' && success()
@@ -321,8 +331,12 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Set up environment
@@ -488,14 +502,31 @@ jobs:
         sudo mkdir -pv /mnt/runner
         sudo chown runner:runner /mnt/runner
 
+    - name: Setup /mnt/docker-data as docker storage
+      run: |
+        sudo mkdir -pv /mnt/docker-data
+        sudo systemctl stop docker.socket docker
+        [ -s "/etc/docker/daemon.json" ] && {
+          cat "/etc/docker/daemon.json" | jq '. + {"data-root": "/mnt/docker-data"}' | sudo tee /etc/docker/daemon.$$
+        } || {
+          echo '{"data-root": "/mnt/docker-data"}' | sudo tee /etc/docker/daemon.$$
+        }
+        sudo mv -f /etc/docker/daemon.$$ /etc/docker/daemon.json
+        sudo systemctl start docker docker.socket
+        docker system info
+
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Set up environment
@@ -656,8 +687,12 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
-        cache-dependency-path: "**/*.sum"
+        go-version-file: 'go-controller/go.mod'
+        # Disabling cache to avoid warnings until these two issues are fixed
+        # https://github.com/actions/setup-go/issues/424
+        # https://github.com/actions/setup-go/issues/403
+        # cache-dependency-path: "**/*.sum"
+        cache: false
       id: go
 
     - name: Set up environment
