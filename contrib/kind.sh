@@ -2,6 +2,7 @@
 
 # Returns the full directory name of the script
 DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+export PATH="$HOME/py310/bin:$PATH"
 
 # Source the kind-common file from the same directory where this script is located
 source "${DIR}/kind-common"

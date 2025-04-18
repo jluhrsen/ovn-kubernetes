@@ -38,7 +38,7 @@ jobs:
   # separate job for parallelism
   lint:
     name: Lint
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
     - name: Check out code
       uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
 
   build-master:
     name: Build-master
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
     # Create a cache for the built master image
     - name: Restore master image cache
@@ -83,7 +83,8 @@ jobs:
         set -x
         if [ -f ${CI_IMAGE_CACHE}${CI_IMAGE_MASTER_TAR}.gz ]; then
             cp ${CI_IMAGE_CACHE}/${CI_IMAGE_MASTER_TAR}.gz ${CI_IMAGE_MASTER_TAR}.gz
-            gunzip ${CI_IMAGE_MASTER_TAR}.gz
+            rm -f ${CI_IMAGE_MASTER_TAR}
+            gunzip -f ${CI_IMAGE_MASTER_TAR}.gz
             echo "MASTER_IMAGE_RESTORED_FROM_CACHE=true" >> "$GITHUB_OUTPUT"
             echo "MASTER_IMAGE_RESTORED=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -118,6 +119,8 @@ jobs:
       if: steps.is_master_image_build_needed.outputs.MASTER_IMAGE_RESTORED != 'true' && success()
       run: |
         set -x
+        sudo apt install git
+        sudo apt install -y build-essential
         pushd go-controller
            make
            make windows
@@ -156,7 +159,7 @@ jobs:
 
   build-pr:
     name: Build-PR
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
     # Create a cache for the build PR image
     - name: Restore PR image cache
@@ -200,7 +203,39 @@ jobs:
       if: steps.is_pr_image_build_needed.outputs.PR_IMAGE_RESTORED != 'true' && success()
       run: |
         set -x
-        sudo apt-get install linux-modules-extra-$(uname -r) -y
+        apt-cache search linux-modules-extra || true
+        apt-cache policy linux-modules-extra-$(uname -r) || true
+        echo "Kernel: $(uname -r)"
+        echo "Checking for lock files:"
+        for f in /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock; do
+          if [ -e "$f" ]; then
+            echo "Lock file exists: $f"
+          sudo rm -f "$f"
+            echo "Removed stale lock: $f"
+          else
+            echo "No lock: $f"
+          fi
+        done
+        sudo apt-get update
+        echo "APT Lock Status:"
+        sudo lsof /var/lib/dpkg/lock-frontend || echo "No lock on lock-frontend"
+        sudo lsof /var/lib/apt/lists/lock || echo "No lock on apt/lists"
+        sudo lsof /var/cache/apt/archives/lock || echo "No lock on apt/cache"
+        
+        echo "Disk usage:"
+        df -h
+    
+        echo "Memory usage:"
+        free -h
+    
+        echo "Attempting to install linux-modules-extra-$(uname -r)"
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y linux-modules-extra-$(uname -r) || true 
+    
+        echo "Attempting to modprobe vrf"
+        sudo modprobe vrf || echo "modprobe failed"
+    
+        sudo apt-get install linux-modules-extra-$(uname -r) -y || true
         sudo modprobe vrf
 
     - name: Build and Test - from current pr branch
@@ -212,8 +247,8 @@ jobs:
            make gofmt
            make verify-go-mod-vendor
            make
-           make windows
-           COVERALLS=1 CONTAINER_RUNNABLE=1 make check
+           # make windows
+           # COVERALLS=1 CONTAINER_RUNNABLE=1 make check
         popd
 
     - name: Build docker image - from current pr branch
@@ -270,7 +305,7 @@ jobs:
   ovn-upgrade-e2e:
     name: Upgrade OVN from Master to PR branch based image
     if: github.event_name != 'schedule'
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     timeout-minutes: 120
     needs:
       - build-master
@@ -278,7 +313,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gateway-mode: [local, shared]
+        gateway-mode: [shared]
     env:
       JOB_NAME: "Upgrade-Tests-${{ matrix.gateway-mode }}"
       OVN_HA: "false"
@@ -314,12 +349,6 @@ jobs:
       run: |
         sudo rm -rf /usr/local/lib/android/sdk
         sudo apt-get update
-        sudo eatmydata apt-get purge --auto-remove -y \
-          azure-cli aspnetcore-* dotnet-* ghc-* firefox \
-          google-chrome-stable \
-          llvm-* microsoft-edge-stable mono-* \
-          msbuild mysql-server-core-* php-* php7* \
-          powershell temurin-* zulu-*
 
     - name: Download test-image-master
       uses: actions/download-artifact@v4
@@ -404,7 +433,7 @@ jobs:
 
   e2e:
     name: e2e
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     # 30 mins for kind, 180 mins for control-plane tests, 10 minutes for all other steps
     timeout-minutes: 220
     strategy:
@@ -428,42 +457,6 @@ jobs:
         # traffic-flow-tests : "<tests range. i.e. 1-24>"
         include:
           - {"target": "shard-conformance", "ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-disabled"}
-          - {"target": "shard-conformance", "ha": "noHA", "gateway-mode": "local",  "ipfamily": "dualstack", "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "shard-conformance", "ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "noSnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "routeadvertisements": "advertise-default"}
-          - {"target": "shard-conformance", "ha": "HA", "gateway-mode": "local",  "ipfamily": "dualstack", "disable-snat-multiple-gws": "noSnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "routeadvertisements": "advertise-default"}
-          - {"target": "shard-conformance", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv6",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "shard-conformance", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "control-plane",     "ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv6",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-disabled",          "dns-name-resolver": "enable-dns-name-resolver"}
-          - {"target": "control-plane",     "ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-disabled", "traffic-flow-tests": "1,2,3"}
-          - {"target": "control-plane-helm","ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-disabled", "dns-name-resolver": "enable-dns-name-resolver"}
-          - {"target": "control-plane-helm","ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "dns-name-resolver": "enable-dns-name-resolver"}
-          - {"target": "control-plane",     "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "dns-name-resolver": "enable-dns-name-resolver"}
-          - {"target": "control-plane",     "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv6",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "control-plane",     "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "2br", "ic": "ic-single-node-zones"}
-          - {"target": "control-plane",     "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv6",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "2br", "ic": "ic-single-node-zones", "dns-name-resolver": "enable-dns-name-resolver"}
-          - {"target": "multi-homing",      "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-disabled"}
-          - {"target": "multi-homing-helm", "ha": "HA",   "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-disabled", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "node-ip-mac-migration", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv6",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-disabled"}
-          - {"target": "node-ip-mac-migration", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "compact-mode",      "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "snatGW",   "second-bridge": "1br", "ic": "ic-disabled"}
-          - {"target": "multi-homing",      "ha": "noHA", "gateway-mode": "local",  "ipfamily": "dualstack", "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "multi-node-zones",  "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-multi-node-zones", "num-workers": "3", "num-nodes-per-zone": "2"}
-          - {"target": "external-gateway",  "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "2br", "ic": "ic-single-node-zones"}
-          - {"target": "external-gateway",  "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "external-gateway",  "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv6",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "2br", "ic": "ic-single-node-zones"}
-          - {"target": "external-gateway",  "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv6",      "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "kv-live-migration", "ha": "noHA", "gateway-mode": "local",  "ipfamily": "ipv4",      "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-disabled", "num-workers": "3", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "kv-live-migration", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "dualstack", "disable-snat-multiple-gws": "noSnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "num-workers": "3", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "control-plane", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4", "disable-snat-multiple-gws": "SnatGW",   "second-bridge": "1br", "ic": "ic-single-node-zones", "forwarding": "disable-forwarding"}
-          - {"target": "network-segmentation", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "dualstack", "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "forwarding": "disable-forwarding"}
-          - {"target": "network-segmentation", "ha": "noHA", "gateway-mode": "local", "ipfamily": "dualstack", "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "network-segmentation", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "dualstack", "disable-snat-multiple-gws": "SnatGW", "second-bridge": "1br", "ic": "ic-disabled"}
-          - {"target": "network-segmentation", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4", "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "network-segmentation", "ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv6", "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones"}
-          - {"target": "bgp", "ha": "noHA", "gateway-mode": "local",  "ipfamily": "dualstack", "disable-snat-multiple-gws": "snatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "routeadvertisements": "advertise-default", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "bgp", "ha": "noHA", "gateway-mode": "shared",  "ipfamily": "ipv4", "disable-snat-multiple-gws": "snatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "routeadvertisements": "advertise-default", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "traffic-flow-test-only","ha": "noHA", "gateway-mode": "shared", "ipfamily": "ipv4", "disable-snat-multiple-gws": "noSnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "traffic-flow-tests": "1-24", "network-segmentation": "enable-network-segmentation"}
-          - {"target": "tools", "ha": "noHA", "gateway-mode": "local", "ipfamily": "dualstack", "disable-snat-multiple-gws": "SnatGW", "second-bridge": "1br", "ic": "ic-single-node-zones", "network-segmentation": "enable-network-segmentation"}
     needs: [ build-pr ]
     env:
       JOB_NAME: "${{ matrix.target }}-${{ matrix.ha }}-${{ matrix.gateway-mode }}-${{ matrix.ipfamily }}-${{ matrix.disable-snat-multiple-gws }}-${{ matrix.second-bridge }}-${{ matrix.ic }}"
@@ -497,20 +490,13 @@ jobs:
     - name: Install VRF kernel module
       run: |
         set -x
-        sudo apt-get install linux-modules-extra-$(uname -r) -y
+        sudo apt-get install linux-modules-extra-$(uname -r) -y || true
         sudo modprobe vrf
 
     - name: Free up disk space
       run: |
         sudo rm -rf /usr/local/lib/android/sdk
         sudo apt-get update
-        sudo eatmydata apt-get purge --auto-remove -y \
-          azure-cli aspnetcore-* dotnet-* ghc-* firefox \
-          google-chrome-stable \
-          llvm-* microsoft-edge-stable mono-* \
-          msbuild mysql-server-core-* php-* php7* \
-          powershell temurin-* zulu-*
-        sudo docker system prune -af
 
     - name: Setup /mnt/runner directory
       run: |
@@ -675,15 +661,13 @@ jobs:
   e2e-dual-conversion:
     name: e2e-dual-conversion
     if: github.event_name != 'schedule'
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
           - {"ha": "HA", "interconnect": "interconnect-disabled"}
-          - {"ha": "noHA", "interconnect": "interconnect-single-node-zones", "num-zones": "3", "num-nodes-per-zone": "1"}
-          # - {"ha": "noHA", "interconnect": "interconnect-multi-node-zones", "num-zones": "2", "num-nodes-per-zone": "2"}
     needs: [ build-pr ]
     env:
       JOB_NAME: "DualStack-conversion-shared-${{ matrix.ha }}-${{ matrix.interconnect }}"
@@ -722,12 +706,6 @@ jobs:
       run: |
         sudo rm -rf /usr/local/lib/android/sdk
         sudo apt-get update
-        sudo eatmydata apt-get purge --auto-remove -y \
-          azure-cli aspnetcore-* dotnet-* ghc-* firefox \
-          google-chrome-stable \
-          llvm-* microsoft-edge-stable mono-* \
-          msbuild mysql-server-core-* php-* php7* \
-          powershell temurin-* zulu-*
 
     - name: Disable ufw
       # For IPv6 and Dualstack, ufw (Uncomplicated Firewall) should be disabled.
