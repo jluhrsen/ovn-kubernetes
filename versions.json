@@ -1,5 +1,10 @@
 [
   {
+    "version": "4.19",
+    "title": "4.19 (Stable)",
+    "aliases": []
+  },
+  {
     "version": "4.18",
     "title": "4.18 (Legacy)",
     "aliases": []
