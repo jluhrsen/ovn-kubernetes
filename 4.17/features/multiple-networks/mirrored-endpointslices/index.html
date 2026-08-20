@@ -3130,14 +3130,14 @@
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|2</span>
 <span class="w">    </span><span class="no">{</span>
-<span class="w">            </span><span class="no">&quot;cniVersion&quot;: &quot;1.0.0&quot;,</span>
-<span class="w">            </span><span class="no">&quot;name&quot;: &quot;l3-network&quot;,</span>
-<span class="w">            </span><span class="no">&quot;type&quot;: &quot;ovn-k8s-cni-overlay&quot;,</span>
-<span class="w">            </span><span class="no">&quot;topology&quot;:&quot;layer3&quot;,</span>
-<span class="w">            </span><span class="no">&quot;subnets&quot;: &quot;10.128.0.0/16/24&quot;,</span>
-<span class="w">            </span><span class="no">&quot;mtu&quot;: 1300,</span>
-<span class="w">            </span><span class="no">&quot;netAttachDefName&quot;: &quot;nad-l3/l3-network&quot;,</span>
-<span class="w">            </span><span class="no">&quot;role&quot;: &quot;primary&quot;</span>
+<span class="w">            </span><span class="no">"cniVersion": "1.0.0",</span>
+<span class="w">            </span><span class="no">"name": "l3-network",</span>
+<span class="w">            </span><span class="no">"type": "ovn-k8s-cni-overlay",</span>
+<span class="w">            </span><span class="no">"topology":"layer3",</span>
+<span class="w">            </span><span class="no">"subnets": "10.128.0.0/16/24",</span>
+<span class="w">            </span><span class="no">"mtu": 1300,</span>
+<span class="w">            </span><span class="no">"netAttachDefName": "nad-l3/l3-network",</span>
+<span class="w">            </span><span class="no">"role": "primary"</span>
 <span class="w">    </span><span class="no">}</span>
 </code></pre></div>
 <p>We can observe the following EndpointSlices created for a one-replica deployment exposed through a <code>sample-deployment</code> service:</p>
@@ -3161,7 +3161,7 @@
 <span class="w">    </span><span class="nt">kubernetes.io/service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sample-deployment</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sample-deployment-rkk4n</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nad-l3</span>
-<span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;31533&quot;</span>
+<span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"31533"</span>
 <span class="nt">addressType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPv4</span>
 <span class="nt">endpoints</span><span class="p">:</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">addresses</span><span class="p">:</span>
@@ -3177,7 +3177,7 @@
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nad-l3</span>
 <span class="w">    </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6eb5d05c-cff4-467d-bc1b-890443750463</span>
 <span class="nt">ports</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 <span class="w">  </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
 </code></pre></div>
@@ -3195,9 +3195,9 @@
 <span class="w">    </span><span class="nt">k8s.ovn.org/endpointslice-network</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">l3-network</span>
 <span class="w">    </span><span class="nt">k8s.ovn.org/service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sample-deployment</span>
 <span class="w">    </span><span class="nt">k8s.ovn.org/source-endpointslice</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sample-deployment-rkk4n</span>
-<span class="w">    </span><span class="nt">k8s.ovn.org/source-endpointslice-version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;31533&quot;</span>
+<span class="w">    </span><span class="nt">k8s.ovn.org/source-endpointslice-version</span><span class="p">:</span><span class="w"> </span><span class="s">"31533"</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nad-l3</span>
-<span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;31535&quot;</span>
+<span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">"31535"</span>
 <span class="nt">addressType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPv4</span>
 <span class="nt">endpoints</span><span class="p">:</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">addresses</span><span class="p">:</span>
@@ -3213,7 +3213,7 @@
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nad-l3</span>
 <span class="w">    </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6eb5d05c-cff4-467d-bc1b-890443750463</span>
 <span class="nt">ports</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
 <span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
 <span class="w">  </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
 </code></pre></div>
