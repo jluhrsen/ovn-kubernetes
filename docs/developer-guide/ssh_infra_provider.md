@@ -62,6 +62,21 @@ The SSH provider does **not** implement `SetupUnderlay` (localnet underlay
 wiring). Specs that need it are skipped automatically when the active provider
 reports `SetupUnderlay` as unsupported.
 
+## Upstream CI job
+
+The `ssh-infra-provider` job is a **substrate guardrail plus one focused real
+e2e**:
+
+1. KinD cluster setup
+2. One real OVN e2e spec with `OVN_TEST_INFRA_PROVIDER=ssh` — the TCP leaf of
+   `Pod to external server PMTUD`, which goes through `test/e2e`'s `TestMain`,
+   the active provider's `NewTestContext` and `PrimaryNetwork`,
+   external-container create and cleanup, and pod-to-external traffic
+   through OVN
+
+It does **not** run a conformance shard or the full e2e suite with
+`OVN_TEST_INFRA_PROVIDER=ssh`.
+
 ## Image preload
 
 When **all** of the following hold, `TestMain` wires KinD's image preloader:
@@ -82,6 +97,12 @@ export OVN_TEST_SSH_USER=$USER
 export OVN_TEST_SSH_KEY=~/.ssh/id_ed25519
 ssh-keyscan -H 127.0.0.1 >> ~/.ssh/known_hosts
 export OVN_TEST_SSH_KNOWN_HOSTS=~/.ssh/known_hosts
+```
+
+The focused e2e the CI job runs, from the repository root:
+
+```bash
+make -C test control-plane WHAT="Pod to external server PMTUD.*TCP"
 ```
 
 ## Security
